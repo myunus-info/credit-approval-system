@@ -59,7 +59,7 @@ function getGlobalConfig() {
 
   const config = {
     routes: getGlobbedPaths(assets.routes),
-    strategies: getGlobbedPaths(assets.strategies),
+    // strategies: getGlobbedPaths(assets.strategies),
   };
   return config;
 }
