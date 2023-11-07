@@ -1,22 +1,25 @@
 const path = require('path');
-const XLSX = require('xlsx');
+// const XLSX = require('xlsx');
 const async = require('async');
+const sequelize = require(path.join(process.cwd(), 'src/config/lib/sequelize'));
+const Customer = require(path.join(process.cwd(), 'src/modules/customer/customer.model'));
+const Loan = require(path.join(process.cwd(), 'src/modules/loan/loan.model'));
+const { getCustomerDataFromXLfile } = require(path.join(
+  process.cwd(),
+  'src/modules/customer/customer.helpers'
+));
+const { getLoanDataFromXLfile } = require(path.join(process.cwd(), '/src/modules/loan/loan.helpers'));
 
 async function init() {
-  const sequelize = require(path.join(process.cwd(), 'src/config/lib/sequelize'));
   const { initEnvironmentVariables } = require(path.join(process.cwd(), 'src/config/config'));
   await initEnvironmentVariables();
-  const Customer = require(path.join(process.cwd(), 'src/modules/customer/customer.model'));
-  const Loan = require(path.join(process.cwd(), 'src/modules/loan/loan.model'));
   sequelize.sync({ alter: true });
 
-  const customerData = XLSX.readFile('data/customer_data.xlsx');
-  const loanData = XLSX.readFile('data/loan_data.xlsx');
+  // const customerData = XLSX.readFile('data/customer_data.xlsx');
+  // const loanData = XLSX.readFile('data/loan_data.xlsx');
 
-  const customers = XLSX.utils
-    .sheet_to_json(customerData.Sheets['Sheet1'])
-    // .slice(0, 3)
-    .map(({ customer_id, first_name, last_name, age, phone_number, monthly_salary: monthly_income }) => {
+  const customers = getCustomerDataFromXLfile().map(
+    ({ customer_id, first_name, last_name, age, phone_number, monthly_salary: monthly_income }) => {
       return {
         customer_id,
         first_name,
@@ -25,11 +28,10 @@ async function init() {
         phone_number,
         monthly_income,
       };
-    });
+    }
+  );
 
-  const loans = XLSX.utils
-    .sheet_to_json(loanData.Sheets['Sheet1'])
-    // .slice(0, 3)
+  const loans = getLoanDataFromXLfile()
     .map(({ loan_id, customer_id, loan_amount, interest_rate, tenure }) => {
       return { loan_id, customer_id, loan_amount, interest_rate, tenure };
     })

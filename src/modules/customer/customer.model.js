@@ -10,6 +10,7 @@ const Customer = sequelize.define(
       primaryKey: true,
       unique: true,
       type: DataTypes.INTEGER,
+      defaultValue: DataTypes.INTEGER,
     },
     first_name: {
       allowNull: false,
