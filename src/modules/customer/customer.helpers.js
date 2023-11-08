@@ -49,9 +49,33 @@ function calculateCreditScore(customer, historicalLoans) {
   return Math.floor(creditScore);
 }
 
+function calculateTotalCurrentLoanEMIs(historicalLoans) {
+  let totalCurrentLoanEMI = 0;
+  const currentYearStart = new Date(new Date().getFullYear(), 0, 1).getTime();
+  const currentYearEnd = new Date(new Date().getFullYear(), 11, 31).getTime();
+  for (const loan of historicalLoans) {
+    if (
+      new Date(loan.start_date).getTime() <= currentYearStart &&
+      new Date(loan.end_date).getTime() >= currentYearEnd
+    ) {
+      totalCurrentLoanEMI += loan.monthly_payment;
+    }
+  }
+  return totalCurrentLoanEMI;
+}
+
+function calculateMonthlyInstallment(loanAmount, interestRate, tenure) {
+  const monthlyInterestRate = interestRate / 12 / 100;
+  const emi =
+    (loanAmount * monthlyInterestRate * Math.pow(1 + monthlyInterestRate, tenure)) /
+    (Math.pow(1 + monthlyInterestRate, tenure) - 1);
+
+  return +emi.toFixed(2);
+}
+
 module.exports = {
   calculateCreditScore,
-  determineLoanEligibility,
+  calculateTotalCurrentLoanEMIs,
   calculateMonthlyInstallment,
   getCustomerDataFromXLfile,
 };
