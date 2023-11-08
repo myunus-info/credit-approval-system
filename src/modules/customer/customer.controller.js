@@ -7,6 +7,7 @@ const {
   calculateMonthlyInstallment,
   calculateTotalCurrentLoanEMIs,
   getCustomerDataFromXLfile,
+  determineLoanEligibility,
 } = require('./customer.helpers');
 
 exports.registerCustomer = asyncHandler(async (req, res, next) => {
@@ -55,48 +56,36 @@ exports.checkLoanEligibility = asyncHandler(async (req, res, next) => {
     }
 
     const totalCurrentLoanEMI = calculateTotalCurrentLoanEMIs(customerLoans);
-    if (totalCurrentLoanEMI > 0.5 * customer.monthly_salary) {
-      return {
-        customer_id: customer.customer_id,
-        approval: false,
-        interest_rate: 0,
-        corrected_interest_rate: 0,
-        tenure: 0,
-        monthly_installment: 0,
-      };
-    }
 
     const creditScore = calculateCreditScore(customer, customerLoans);
     console.log('Credit Score: ', creditScore);
-    let interestRate = interest_rate;
+    const { interestRate, approval } = determineLoanEligibility(
+      creditScore,
+      interest_rate,
+      customer,
+      totalCurrentLoanEMI
+    );
+    const monthlyInstallment = calculateMonthlyInstallment(loan_amount, interest_rate, tenure);
 
-    if (creditScore > 50) {
-      interestRate = interest_rate;
-    } else if (50 > creditScore > 30) {
-      interestRate > 12 ? (interestRate = interest_rate) : (interestRate = 12);
-    } else if (30 > creditScore > 10) {
-      interestRate > 16 ? (interestRate = interest_rate) : (interestRate = 16);
+    if (approval) {
+      res.status(200).json({
+        customer_id: customer.customer_id,
+        approval,
+        interest_rate: interestRate,
+        corrected_interest_rate: interestRate,
+        tenure,
+        monthly_installment: monthlyInstallment,
+      });
     } else {
-      return {
+      res.status(401).json({
         customer_id: customer.customer_id,
         approval: false,
         interest_rate: 0,
         corrected_interest_rate: 0,
         tenure: 0,
         monthly_installment: 0,
-      };
+      });
     }
-
-    const monthlyInstallment = calculateMonthlyInstallment(loan_amount, interest_rate, tenure);
-
-    res.status(200).json({
-      customer_id: customer.customer_id,
-      approval: true,
-      interest_rate: interestRate,
-      corrected_interest_rate: interestRate,
-      tenure,
-      monthly_installment: monthlyInstallment,
-    });
   } catch (err) {
     return next(new AppError(500, 'Internal server error!'));
   }

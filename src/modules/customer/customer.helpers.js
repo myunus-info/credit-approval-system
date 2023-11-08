@@ -73,9 +73,34 @@ function calculateMonthlyInstallment(loanAmount, interestRate, tenure) {
   return +emi.toFixed(2);
 }
 
+function determineLoanEligibility(creditScore, interest_rate, customer, totalCurrentLoanEMI) {
+  let interestRate = interest_rate;
+  let approval = false;
+
+  if (creditScore > 50) {
+    interestRate = interest_rate;
+    approval = true;
+  } else if (creditScore < 50 && creditScore > 30) {
+    interestRate > 12 ? (interestRate = interest_rate) : (interestRate = 12);
+    approval = true;
+  } else if (creditScore < 30 && creditScore > 10) {
+    interestRate > 16 ? (interestRate = interest_rate) : (interestRate = 16);
+    approval = true;
+  } else if (totalCurrentLoanEMI > 0.5 * customer.monthly_salary) {
+    interestRate = 0;
+    approval = false;
+  } else {
+    interestRate = 0;
+    approval = false;
+  }
+
+  return { interestRate, approval };
+}
+
 module.exports = {
   calculateCreditScore,
   calculateTotalCurrentLoanEMIs,
   calculateMonthlyInstallment,
   getCustomerDataFromXLfile,
+  determineLoanEligibility,
 };
