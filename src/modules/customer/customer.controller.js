@@ -13,6 +13,11 @@ const {
 exports.registerCustomer = asyncHandler(async (req, res, next) => {
   const { customer_id, first_name, last_name, age, monthly_income, phone_number } = req.body;
 
+  const existingCustomer = await Customer.findByPk(customer_id);
+  if (existingCustomer) {
+    return next(new AppError(400, `Customer with Id: (${customer_id}) already exists!`));
+  }
+
   const approved_limit = Math.round((36 * monthly_income) / 100000) * 100000;
 
   let newCustomer;

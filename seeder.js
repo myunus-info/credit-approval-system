@@ -1,22 +1,19 @@
 const path = require('path');
 // const XLSX = require('xlsx');
 const async = require('async');
-const sequelize = require(path.join(process.cwd(), 'src/config/lib/sequelize'));
-const Customer = require(path.join(process.cwd(), 'src/modules/customer/customer.model'));
-const Loan = require(path.join(process.cwd(), 'src/modules/loan/loan.model'));
 const { getCustomerDataFromXLfile } = require(path.join(
   process.cwd(),
   'src/modules/customer/customer.helpers'
 ));
-const { getLoanDataFromXLfile } = require(path.join(process.cwd(), '/src/modules/loan/loan.helpers'));
+const { getLoanDataFromXLfile } = require(path.join(process.cwd(), 'src/modules/loan/loan.helpers'));
 
 async function init() {
+  const sequelize = require(path.join(process.cwd(), 'src/config/lib/sequelize'));
+  const Customer = require(path.join(process.cwd(), 'src/modules/customer/customer.model'));
+  const Loan = require(path.join(process.cwd(), 'src/modules/loan/loan.model'));
   const { initEnvironmentVariables } = require(path.join(process.cwd(), 'src/config/config'));
   await initEnvironmentVariables();
-  sequelize.sync({ alter: true });
-
-  // const customerData = XLSX.readFile('data/customer_data.xlsx');
-  // const loanData = XLSX.readFile('data/loan_data.xlsx');
+  await sequelize.sync({ alter: true });
 
   const customers = getCustomerDataFromXLfile().map(
     ({ customer_id, first_name, last_name, age, phone_number, monthly_salary: monthly_income }) => {
