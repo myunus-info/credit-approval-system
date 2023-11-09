@@ -66,11 +66,11 @@ function calculateTotalCurrentLoanEMIs(historicalLoans) {
 
 function calculateMonthlyInstallment(loanAmount, interestRate, tenure) {
   const monthlyInterestRate = interestRate / 12 / 100;
-  const emi =
+  const monthlyInstallment =
     (loanAmount * monthlyInterestRate * Math.pow(1 + monthlyInterestRate, tenure)) /
     (Math.pow(1 + monthlyInterestRate, tenure) - 1);
 
-  return +emi.toFixed(2);
+  return +monthlyInstallment.toFixed(2);
 }
 
 function determineLoanEligibility(creditScore, interest_rate, customer, totalCurrentLoanEMI) {

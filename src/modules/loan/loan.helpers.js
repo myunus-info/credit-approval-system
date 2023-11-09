@@ -66,11 +66,25 @@ function calculateTotalCurrentLoanEMIs(historicalLoans) {
 
 function calculateMonthlyInstallment(loanAmount, interestRate, tenure) {
   const monthlyInterestRate = interestRate / 12 / 100;
-  const emi =
+  const monthlyInstallment =
     (loanAmount * monthlyInterestRate * Math.pow(1 + monthlyInterestRate, tenure)) /
     (Math.pow(1 + monthlyInterestRate, tenure) - 1);
 
-  return +emi.toFixed(2);
+  return +monthlyInstallment.toFixed(2);
+}
+
+function recalculateEMIAmount(dueInstallmentAmount, paymentAmount, tenure) {
+  if (paymentAmount > dueInstallmentAmount) {
+    return dueInstallmentAmount;
+  }
+
+  const remainingLoan = dueInstallmentAmount - paymentAmount;
+  const monthlyInterestRate = dueInstallmentAmount / 12 / 100;
+  // const remainingTenure = 12;
+
+  const monthlyInstallment = calculateMonthlyInstallment(remainingLoan, monthlyInterestRate, tenure);
+
+  return monthlyInstallment;
 }
 
 function determineLoanEligibility(creditScore, interest_rate, customer, totalCurrentLoanEMI) {
@@ -97,10 +111,36 @@ function determineLoanEligibility(creditScore, interest_rate, customer, totalCur
   return { interestRate, approval };
 }
 
+function calculateAmountRepaid(loan) {
+  const emisPaidOnTime = loan['EMIs paid on Time'];
+  const monthlyInstallment = calculateMonthlyInstallment(
+    loan.loan_amount,
+    loan.interest_rate,
+    loan.tenure
+  );
+
+  return emisPaidOnTime * monthlyInstallment;
+}
+
+function calculateRepaymentsLeft(loan, amountsRepaid) {
+  const monthlyInstallment = calculateMonthlyInstallment(
+    loan.loan_amount,
+    loan.interest_rate,
+    loan.tenure
+  );
+  const totalInstallments = loan.tenure;
+  const repaymentsLeft = Math.max(totalInstallments - Math.floor(amountsRepaid / monthlyInstallment), 0);
+
+  return repaymentsLeft;
+}
+
 module.exports = {
   calculateCreditScore,
   calculateTotalCurrentLoanEMIs,
   calculateMonthlyInstallment,
+  recalculateEMIAmount,
   getLoanDataFromXLfile,
   determineLoanEligibility,
+  calculateAmountRepaid,
+  calculateRepaymentsLeft,
 };

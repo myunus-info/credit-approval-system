@@ -7,7 +7,10 @@ const {
   determineLoanEligibility,
   calculateTotalCurrentLoanEMIs,
   calculateMonthlyInstallment,
+  recalculateEMIAmount,
   getLoanDataFromXLfile,
+  calculateAmountRepaid,
+  calculateRepaymentsLeft,
 } = require('./loan.helpers');
 
 exports.createLoan = asyncHandler(async (req, res, next) => {
@@ -99,4 +102,70 @@ exports.viewLoan = asyncHandler(async (req, res, next) => {
   } catch (err) {
     return next(new AppError(500, 'Internal server error!'));
   }
+});
+
+exports.makePayment = asyncHandler(async (req, res, next) => {
+  const { customer_id, loan_id } = req.params;
+  const { payment_amount } = req.body;
+  const customer = await Customer.findByPk(customer_id);
+  if (!customer) {
+    return next(new AppError(404, 'No customer found!'));
+  }
+  const loan = await Loan.findByPk(loan_id);
+  if (!loan) {
+    return next(new AppError(404, 'No loan found!'));
+  }
+
+  const dueInstallmentAmount = calculateMonthlyInstallment(
+    loan.loan_amount,
+    loan.interest_rate,
+    loan.tenure
+  );
+
+  const paymentAmount = parseFloat(payment_amount);
+  const emiAmount = recalculateEMIAmount(dueInstallmentAmount, paymentAmount, loan.tenure);
+
+  await loan.update({ loan_amount: loan.loan_amount - emiAmount });
+  res.status(200).json(loan);
+});
+
+exports.viewStatement = asyncHandler(async (req, res, next) => {
+  const { customer_id, loan_id } = req.params;
+  const customer = await Customer.findByPk(customer_id);
+  if (!customer) {
+    return next(new AppError(404, 'No customer found!'));
+  }
+
+  const loans = getLoanDataFromXLfile();
+  const customerLoans = loans.filter(loan => loan.customer_id === customer.customer_id);
+  if (!customerLoans || customerLoans.length < 1) {
+    return next(new AppError(500, 'No loans found for this customer!'));
+  }
+
+  const loanData = customerLoans.map(loan => {
+    const creditScore = calculateCreditScore(customer, customerLoans);
+    const totalCurrentLoanEMI = calculateTotalCurrentLoanEMIs(customerLoans);
+    const { _, interestRate } = determineLoanEligibility(
+      creditScore,
+      loan.interest_rate,
+      customer,
+      totalCurrentLoanEMI
+    );
+    const amountsRepaid = calculateAmountRepaid(loan);
+    return {
+      customer_id: loan.customer_id,
+      loan_id: loan.loan_id,
+      principal: loan.loan_amount,
+      interest_rate: interestRate,
+      Amount_paid: amountsRepaid,
+      monthly_installment: calculateMonthlyInstallment(
+        loan.loan_amount,
+        loan.interest_rate,
+        loan.tenure
+      ),
+      repayments_Left: calculateRepaymentsLeft(loan, amountsRepaid),
+    };
+  });
+
+  res.status(200).json(loanData);
 });
