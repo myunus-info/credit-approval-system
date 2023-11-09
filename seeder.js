@@ -1,5 +1,4 @@
 const path = require('path');
-// const XLSX = require('xlsx');
 const async = require('async');
 const { getCustomerDataFromXLfile } = require(path.join(
   process.cwd(),
