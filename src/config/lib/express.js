@@ -1,6 +1,7 @@
 const path = require('path');
 const express = require('express');
 const morgan = require('morgan');
+const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const xssClean = require('xss-clean');
@@ -27,6 +28,7 @@ module.exports = () => {
   app.use(xssClean());
 
   app.use(express.json({ limit: '10kb' }));
+  app.use(cors());
   app.use(express.urlencoded({ extended: false }));
 
   app.set('port', nodeCache.getValue('PORT'));
