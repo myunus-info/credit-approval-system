@@ -1,4 +1,6 @@
 # credit-approval-system
+# Video Intro Of the Project
+- https://drive.google.com/file/d/1eOegvgw7pAeJUA0nJMzf_VHrklW9pXky/view?usp=sharing
 
 ## PROJECT SETUP
 
